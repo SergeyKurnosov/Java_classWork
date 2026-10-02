@@ -1,96 +1,102 @@
 package org.example;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-import task_1.Book;
-import task_2.Student;
-import task_3.Address;
-import task_3.User;
-
-import java.lang.reflect.Type;
-import java.util.List;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 
 //TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
 // click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
 public class Main {
     static void main() {
-        /*
-        1.Создай класс Book с полями title (String), author (String), year (int), price (double).
-        Создай объект, преобразуй его в JSON-строку через Gson и выведи в консоль. Затем включи красивый вывод через
-        GsonBuilder().setPrettyPrinting() и сравни результат.
-         */
-        Book book = new Book("book","author",2026,12.3);
-        Gson gson = new Gson();
-        String json = gson.toJson(book);
-        System.out.println(json);// {"title":"book","author":"author","year":2026,"price":12.3}
-
-        gson = new GsonBuilder().setPrettyPrinting().create();
-        json = gson.toJson(book);
-        System.out.println(json);
-        /*
-        {
-  "title": "book",
-  "author": "author",
-  "year": 2026,
-  "price": 12.3
-}
-         */
-        //============================================================================
-        /*
-        2.Дана JSON-строка:
-        [
-        {"name": "Аня", "age": 19, "grade": 4.5},
-        {"name": "Борис", "age": 21, "grade": 3.8},
-        {"name": "Вера", "age": 20, "grade": 4.9}
-        ]
-        Создай класс Student, десериализуй строку в List<Student> ( нужен TypeToken), затем выведи имена студентов с оценкой
-        выше 4.0 и средний балл всей группы.
-         */
-        String json2 = "[{\"name\": \"Аня\", \"age\": 19, \"grade\": 4.5}," +
-                "{\"name\": \"Борис\", \"age\": 21, \"grade\": 3.8}," +
-                "{\"name\": \"Вера\", \"age\": 20, \"grade\": 4.9}" +
-                "]";
-
-        Type studentList = new TypeToken<List<Student>>(){}.getType();
-        List<Student> students = gson.fromJson(json2, studentList);
-        students.stream().filter(s->s.grade()>4.0).forEach(System.out::println);
-        double result= students.stream().mapToDouble(Student::grade).average().orElse(0.0);
-        System.out.println(result);
-
-        //============================================================================
-        /*
-        3.Вложенные объекты и скрытие поля
-        Создай классы Address (city, street) и User (login, password, address, список List<String> hobbies).
-        Сериализуй пользователя в JSON так, чтобы поле password в результат не попало
-        (используй @Expose с excludeFieldsWithoutExposeAnnotation()). Затем десериализуй полученный JSON обратно и проверь,
-        что password у нового объекта равен null.
-         */
-        User user = new User("user","password",new Address("city","street"),List.of("hobbie1","hobbie2","hobbie3"));
-        gson = new GsonBuilder()
-                .setPrettyPrinting()
-                .serializeNulls()
-                .excludeFieldsWithoutExposeAnnotation()
-                .create();
-        String json3 = gson.toJson(user);
-        System.out.println(json3);
-
-        User user2 = gson.fromJson(json3,User.class);
-        System.out.println(user2); // User[login=user, password=null, address=Address[city=city, street=street], hobbies=[hobbie1, hobbie2, hobbie3]]
 
 
         //============================================================================
+        /*
+        1.Окно JFrame с кнопкой «Сгенерировать», полем для вывода и двумя полями ввода: «от» и «до».
+        По нажатию на кнопку в метку выводится случайное число из этого диапазона.
+        Если в поля введено не число или «от» больше «до», вывести сообщение об ошибке в ту же метку.
+         */
+        JTextField jTextField_min = new JTextField(5), jTextField_max = new JTextField(5);
+        JLabel jLabel_min = new JLabel("min"),jLabel_max = new JLabel("max"),jLabel_result = new JLabel("___");
+        JPanel jPanel = new JPanel(new GridLayout(4,2,8,8));
+        JButton jButton = new JButton("Сгенерировать");
+        jButton.addActionListener(e->{
+            String value1 = jTextField_min.getText() , value2 = jTextField_max.getText();
+            int min = 0,max=0;
+            if (value1 != null && !value1.isEmpty() && value2 != null && !value2.isEmpty()) {
+                try {
+                    min = Integer.parseInt(value1);
+                    max = Integer.parseInt(value2);
+                    if(min > max){
+                        jLabel_result.setText("min не может быть больше max (исправлено)");
+                        jTextField_min.setText(String.valueOf(max));
+                        jTextField_max.setText(String.valueOf(min));
+                    }
+                    else {
+                        if(min == max)
+                            jLabel_result.setText(String.valueOf(min));
+                        else
+                            jLabel_result.setText(String.valueOf((int) (Math.random() * (max - min + 1)) + min));
+                    }
+                }catch (NumberFormatException ex) {
+                    return;
+                }
+            }
+
+        });
+        JFrame jFrame1 = new JFrame("Task1");
+        jFrame1.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        jPanel.add(jLabel_min);
+        jPanel.add(jTextField_min);
+        jPanel.add(jLabel_max);
+        jPanel.add(jTextField_max);
+        jPanel.add(jButton);
+        jPanel.add(jLabel_result);
+        jFrame1.add(jPanel);
+        jFrame1.setSize(400,200);
+
+        jFrame1.setLocationRelativeTo(null);
+        jFrame1.setVisible(true);
 
 
+        //============================================================================
+        /*
+        2.Окно с кнопкой «Клик» и меткой «Кликов: 0». Каждый клик увеличивает счётчик.
+        Добавь кнопку «Сброс», а когда счётчик дойдёт до 10, пусть метка меняет текст на «Хватит кликать!».
+         */
+        JLabel jLabel_result = new JLabel("___");
+        JPanel jPanel = new JPanel(new GridLayout(1,2,8,8));
+        JButton jButton_click = new JButton("Клик") , jButton_clear = new JButton("Сброс");
+        int [] count = {0};
+        jButton_click.addActionListener(e->{
+            if(++count[0]!=10){
+                jLabel_result.setText("Кликов: "+ count[0]);
+            }
+            else {
+                jLabel_result.setText("Хватит кликать!");
+                count[0]=0;
+            }
+        });
 
+        jButton_clear.addActionListener(e->{
+            jLabel_result.setText("");
+            count[0]=0;
+        });
+        JFrame jFrame1 = new JFrame("Task2");
+        jFrame1.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
+        jPanel.add(jButton_click);
+        jPanel.add(jButton_clear);
+        jPanel.add(jLabel_result);
+        jFrame1.add(jPanel);
+        jFrame1.setSize(400,200);
 
+        jFrame1.setLocationRelativeTo(null);
+        jFrame1.setVisible(true);
 
-
-
-
-
-
+        //============================================================================
 
     }
 }
