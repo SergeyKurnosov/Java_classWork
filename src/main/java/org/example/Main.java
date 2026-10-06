@@ -2,101 +2,102 @@ package org.example;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
+
+
 public class Main {
-    static void main() {
+
+    static int counter = 0;
+    static int count_step = 100_000;
+    static void main() throws InterruptedException {
 
 
         //============================================================================
         /*
-        1.Окно JFrame с кнопкой «Сгенерировать», полем для вывода и двумя полями ввода: «от» и «до».
-        По нажатию на кнопку в метку выводится случайное число из этого диапазона.
-        Если в поля введено не число или «от» больше «до», вывести сообщение об ошибке в ту же метку.
+        1.Создай три потока через Runnable (один через лямбду, один через отдельный класс). Каждому задай имя
+        через setName и приоритет: MIN_PRIORITY, NORM_PRIORITY, MAX_PRIORITY. Каждый печатает своё имя и приоритет 5 раз с Thread.sleep(100).
+        В main дождись всех через join и напечатай «Все завершились».
          */
-        JTextField jTextField_min = new JTextField(5), jTextField_max = new JTextField(5);
-        JLabel jLabel_min = new JLabel("min"),jLabel_max = new JLabel("max"),jLabel_result = new JLabel("___");
-        JPanel jPanel = new JPanel(new GridLayout(4,2,8,8));
-        JButton jButton = new JButton("Сгенерировать");
-        jButton.addActionListener(e->{
-            String value1 = jTextField_min.getText() , value2 = jTextField_max.getText();
-            int min = 0,max=0;
-            if (value1 != null && !value1.isEmpty() && value2 != null && !value2.isEmpty()) {
-                try {
-                    min = Integer.parseInt(value1);
-                    max = Integer.parseInt(value2);
-                    if(min > max){
-                        jLabel_result.setText("min не может быть больше max (исправлено)");
-                        jTextField_min.setText(String.valueOf(max));
-                        jTextField_max.setText(String.valueOf(min));
-                    }
-                    else {
-                        if(min == max)
-                            jLabel_result.setText(String.valueOf(min));
-                        else
-                            jLabel_result.setText(String.valueOf((int) (Math.random() * (max - min + 1)) + min));
-                    }
-                }catch (NumberFormatException ex) {
-                    return;
+
+        Thread oneThread = new Thread(new ThreadCustom());
+        Thread twoThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                for (int i = 0; i < 5; i++) {
+                    System.out.println(Thread.currentThread().getName() + " -> " + Thread.currentThread().getPriority());
                 }
             }
-
         });
-        JFrame jFrame1 = new JFrame("Task1");
-        jFrame1.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        Thread threeThread = new Thread(()->{
+            for (int i = 0; i < 5; i++) {
+                System.out.println(Thread.currentThread().getName() + " -> " + Thread.currentThread().getPriority());
+            }
+        });
 
-        jPanel.add(jLabel_min);
-        jPanel.add(jTextField_min);
-        jPanel.add(jLabel_max);
-        jPanel.add(jTextField_max);
-        jPanel.add(jButton);
-        jPanel.add(jLabel_result);
-        jFrame1.add(jPanel);
-        jFrame1.setSize(400,200);
+        oneThread.setName("one");
+        twoThread.setName("two");
+        threeThread.setName("three");
 
-        jFrame1.setLocationRelativeTo(null);
-        jFrame1.setVisible(true);
+        oneThread.setPriority(Thread.MIN_PRIORITY);
+        twoThread.setPriority(Thread.NORM_PRIORITY);
+        threeThread.setPriority(Thread.MAX_PRIORITY);
+
+        oneThread.start();
+        twoThread.start();
+        threeThread.start();
+
+        oneThread.join();
+        twoThread.join();
+        threeThread.join();
+
+        System.out.println("Все завершились");
 
 
         //============================================================================
         /*
-        2.Окно с кнопкой «Клик» и меткой «Кликов: 0». Каждый клик увеличивает счётчик.
-        Добавь кнопку «Сброс», а когда счётчик дойдёт до 10, пусть метка меняет текст на «Хватит кликать!».
+        2.Создай статическое поле static int counter = 0. Запусти 2 потока, каждый делает counter++ 100 000 раз.
+        Дождись обоих через join и выведи counter.
+        Повтори запуск 5 раз в цикле (обнуляй counter перед каждым запуском). Затем замени 100 000 на 100 и снова запусти
          */
-        JLabel jLabel_result = new JLabel("___");
-        JPanel jPanel = new JPanel(new GridLayout(1,2,8,8));
-        JButton jButton_click = new JButton("Клик") , jButton_clear = new JButton("Сброс");
-        int [] count = {0};
-        jButton_click.addActionListener(e->{
-            if(++count[0]!=10){
-                jLabel_result.setText("Кликов: "+ count[0]);
+
+        Runnable task = ()->{
+            for (int i = 0; i < count_step ; i++) {
+                counter++;
             }
-            else {
-                jLabel_result.setText("Хватит кликать!");
-                count[0]=0;
-            }
-        });
+        };
 
-        jButton_clear.addActionListener(e->{
-            jLabel_result.setText("");
-            count[0]=0;
-        });
-        JFrame jFrame1 = new JFrame("Task2");
-        jFrame1.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        Thread one = new Thread(task), two = new Thread(task);
+        one.start();
+        two.start();
+        one.join();
+        two.join();
+        System.out.println(counter);
+        System.out.println();
 
-        jPanel.add(jButton_click);
-        jPanel.add(jButton_clear);
-        jPanel.add(jLabel_result);
-        jFrame1.add(jPanel);
-        jFrame1.setSize(400,200);
 
-        jFrame1.setLocationRelativeTo(null);
-        jFrame1.setVisible(true);
+        forsThread(task);
+        System.out.println();
+        count_step = 100;
+        forsThread(task);
 
         //============================================================================
 
     }
+
+    public static void forsThread(Runnable task) throws InterruptedException {
+        for (int i = 0; i < 5; i++) {
+
+            Thread thread1 = new Thread(task);
+            Thread thread2 = new Thread(task);
+            counter = 0;
+            thread1.start();
+            thread2.start();
+
+            thread1.join();
+            thread2.join();
+
+            System.out.println(counter);
+        }
+    }
+
 }
