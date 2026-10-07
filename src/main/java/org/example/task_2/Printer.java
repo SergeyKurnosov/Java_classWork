@@ -8,5 +8,6 @@ public class Printer {
             System.out.println(owner + ":строка " + i);
             Thread.sleep(50);
         }
+
     }
 }
